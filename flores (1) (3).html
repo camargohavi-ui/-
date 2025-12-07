@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flores y Corazones</title>
+
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: #05060a;
+        font-family: sans-serif;
+    }
+
+    #frase {
+        position: absolute;
+        top: 40px;
+        width: 100%;
+        text-align: center;
+        font-size: 34px;
+        font-weight: bold;
+        color: #ffb3ff;
+        text-shadow: 0 0 15px #ff33cc, 0 0 30px #ff0099;
+        letter-spacing: 2px;
+        z-index: 10;
+    }
+
+    canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+</style>
+</head>
+<body>
+
+<div id="frase">"QUE ESE BRILLO TAN BONITO QUE TIENES NUNCA SE APAGUE"</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+window.onresize = () => {
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+};
+
+// ---- FUNCIÓN PARA DIBUJAR UNA FLOR ----
+function dibujarFlor(x, y, size = 32) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.shadowColor = "#ff003c";
+    ctx.shadowBlur = 25;
+
+    for (let i = 0; i < 6; i++) {
+        ctx.rotate(Math.PI / 3);
+
+        let grad = ctx.createLinearGradient(0, -20, 0, 30);
+        grad.addColorStop(0, "#ff4d4d");
+        grad.addColorStop(0.5, "#ff1a1a");
+        grad.addColorStop(1, "#b30000");
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(size * 0.6, -size * 0.8, 0, -size);
+        ctx.quadraticCurveTo(-size * 0.6, -size * 0.8, 0, 0);
+        ctx.fill();
+    }
+
+    ctx.beginPath();
+    let c = ctx.createRadialGradient(0, 0, 5, 0, 0, size * 0.4);
+    c.addColorStop(0, "white");
+    c.addColorStop(1, "#ff4d4d");
+    ctx.fillStyle = c;
+    ctx.arc(0, 0, size * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+}
+
+// ----- MATRIZ "A" -----
+let matrizA = [
+"  *  ",
+" * * ",
+"*****",
+"*   *",
+"*   *"
+];
+
+// ----- MATRIZ CORAZÓN -----
+let matrizCorazon = [
+" *** *** ",
+"*********",
+"*********",
+" ******* ",
+"  *****  ",
+"   ***   "
+];
+
+// ----- CONVERTIR MATRIZ A COORDENADAS -----
+function matrizAFlores(matriz, offsetX, offsetY, separacion = 45) {
+    let lista = [];
+    for (let row = 0; row < matriz.length; row++) {
+        for (let col = 0; col < matriz[row].length; col++) {
+            if (matriz[row][col] === "*") {
+                lista.push([
+                    offsetX + col * separacion,
+                    offsetY + row * separacion
+                ]);
+            }
+        }
+    }
+    return lista;
+}
+
+// ----- POSICIONES -----
+let posA = matrizAFlores(
+    matrizA,
+    canvas.width * 0.32,
+    canvas.height * 0.55
+);
+
+let posCorazon = matrizAFlores(
+    matrizCorazon,
+    canvas.width * 0.50,
+    canvas.height * 0.53
+);
+
+// -------- CORAZONES ANIMADOS --------
+class CorazonAnim {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = canvas.height + 20;
+        this.alpha = 1;
+        this.size = Math.random() * 20 + 15;
+        this.speed = Math.random() * 1 + 0.5;
+    }
+
+    dibujar() {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.translate(this.x, this.y);
+
+        ctx.fillStyle = "#ff7eb4";
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(-this.size, -this.size, -this.size * 1.6, this.size / 2, 0, this.size * 1.5);
+        ctx.bezierCurveTo(this.size * 1.6, this.size / 2, this.size, -this.size, 0, 0);
+        ctx.fill();
+
+        ctx.restore();
+
+        this.y -= this.speed;
+        this.alpha -= 0.008;
+    }
+}
+
+let corazones = [];
+setInterval(() => corazones.push(new CorazonAnim()), 150);
+
+// -------- ANIMACIÓN --------
+function animar() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    posA.forEach(p => dibujarFlor(p[0], p[1]));
+
+    posCorazon.forEach(p => dibujarFlor(p[0], p[1]));
+
+    corazones = corazones.filter(c => c.alpha > 0);
+    corazones.forEach(c => c.dibujar());
+
+    requestAnimationFrame(animar);
+}
+
+animar();
+</script>
+
+</body>
+</html>
